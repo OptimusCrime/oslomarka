@@ -8,7 +8,6 @@ import (
 	"github.com/OptimusCrime/oslomarka/backend/internal/geo"
 )
 
-// Route holds a parsed route segment and its waypoints.
 type Route struct {
 	Name        string
 	RouteType   string
@@ -38,7 +37,6 @@ type properties struct {
 	Marked      string `json:"marked"`
 }
 
-// LoadGeoJSON reads a GeoJSON file and returns all LineString features as Routes.
 func LoadGeoJSON(path string) ([]Route, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {

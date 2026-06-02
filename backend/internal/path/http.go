@@ -14,12 +14,10 @@ type pathRequest struct {
 	To   geo.Coord `json:"to"`
 }
 
-// Handler serves HTTP requests for shortest-path queries.
 type Handler struct {
 	s *Service
 }
 
-// NewHandler creates a new path Handler.
 func NewHandler(s *Service) *Handler {
 	return &Handler{s: s}
 }

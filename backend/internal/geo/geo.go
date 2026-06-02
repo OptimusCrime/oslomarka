@@ -1,19 +1,16 @@
 package geo
 
-import (
-	"fmt"
-	"math"
-)
+import "math"
 
 // Coord is a geographic point in WGS84 (latitude/longitude in degrees).
 type Coord struct {
 	Lat, Lng float64
 }
 
-// NodeID returns a stable string key for a coordinate, snapped to 5 decimal
-// places (~1 metre precision).
-func NodeID(lat, lng float64) string {
-	return fmt.Sprintf("%.5f,%.5f", snap(lat), snap(lng))
+// Snap rounds a coordinate to 5 decimal places (~1 metre precision) so that
+// near-identical points collapse to the same value and can serve as a map key.
+func Snap(c Coord) Coord {
+	return Coord{Lat: snap(c.Lat), Lng: snap(c.Lng)}
 }
 
 func snap(x float64) float64 {

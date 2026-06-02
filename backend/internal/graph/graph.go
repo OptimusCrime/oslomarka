@@ -3,33 +3,34 @@ package graph
 import (
 	"container/heap"
 	"math"
+	"slices"
 
 	"github.com/OptimusCrime/oslomarka/backend/internal/geo"
 )
 
-// Graph is an undirected weighted graph. Nodes are identified by NodeID strings
-// (snapped lat/lng), and edge weights are distances in metres.
 type Graph struct {
-	adjacency map[string][]edge
-	positions map[string]geo.Coord
+	adjacency map[geo.Coord][]edge
+	// positions maps each snapped node key back to an original (un-snapped)
+	// coordinate, so paths are returned at full input precision.
+	positions map[geo.Coord]geo.Coord
 	numEdges  int
 }
 
 type edge struct {
-	to   string
+	to   geo.Coord
 	dist float64
 }
 
 func newGraph() *Graph {
 	return &Graph{
-		adjacency: make(map[string][]edge),
-		positions: make(map[string]geo.Coord),
+		adjacency: make(map[geo.Coord][]edge),
+		positions: make(map[geo.Coord]geo.Coord),
 	}
 }
 
 func (g *Graph) addEdge(a, b geo.Coord) {
-	idA := geo.NodeID(a.Lat, a.Lng)
-	idB := geo.NodeID(b.Lat, b.Lng)
+	idA := geo.Snap(a)
+	idB := geo.Snap(b)
 	dist := geo.Haversine(a, b)
 
 	g.positions[idA] = a
@@ -53,9 +54,8 @@ func BuildGraph(routeCoords [][]geo.Coord) *Graph {
 func (g *Graph) NodeCount() int { return len(g.positions) }
 func (g *Graph) EdgeCount() int { return g.numEdges }
 
-// NearestNode returns the NodeID of the graph node closest to target.
-func (g *Graph) NearestNode(target geo.Coord) string {
-	bestID := ""
+func (g *Graph) NearestNode(target geo.Coord) geo.Coord {
+	var bestID geo.Coord
 	bestDist := math.MaxFloat64
 	for id, c := range g.positions {
 		if d := geo.Haversine(target, c); d < bestDist {
@@ -66,8 +66,7 @@ func (g *Graph) NearestNode(target geo.Coord) string {
 	return bestID
 }
 
-// PathCoords resolves a slice of NodeIDs into their actual Coord values.
-func (g *Graph) PathCoords(path []string) []geo.Coord {
+func (g *Graph) PathCoords(path []geo.Coord) []geo.Coord {
 	coords := make([]geo.Coord, len(path))
 	for i, id := range path {
 		coords[i] = g.positions[id]
@@ -75,11 +74,9 @@ func (g *Graph) PathCoords(path []string) []geo.Coord {
 	return coords
 }
 
-// ShortestPath runs Dijkstra's algorithm from startID to endID.
-// Returns the path as ordered NodeIDs and total distance in metres.
-func (g *Graph) ShortestPath(startID, endID string) ([]string, float64) {
-	dist := map[string]float64{startID: 0}
-	prev := map[string]string{}
+func (g *Graph) ShortestPath(startID, endID geo.Coord) ([]geo.Coord, float64) {
+	dist := map[geo.Coord]float64{startID: 0}
+	prev := map[geo.Coord]geo.Coord{}
 
 	pq := priorityQueue{{id: startID, cost: 0}}
 	heap.Init(&pq)
@@ -109,18 +106,21 @@ func (g *Graph) ShortestPath(startID, endID string) ([]string, float64) {
 		return nil, 0
 	}
 
-	var path []string
-	for n := endID; n != ""; n = prev[n] {
+	// Walk prev pointers from endID back to startID (the only reached node
+	// without a predecessor), then reverse into start-to-end order.
+	var path []geo.Coord
+	for n := endID; ; n = prev[n] {
 		path = append(path, n)
+		if n == startID {
+			break
+		}
 	}
-	for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
-		path[i], path[j] = path[j], path[i]
-	}
+	slices.Reverse(path)
 	return path, total
 }
 
 type pqItem struct {
-	id   string
+	id   geo.Coord
 	cost float64
 }
 

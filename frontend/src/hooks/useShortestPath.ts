@@ -22,7 +22,8 @@ export function useShortestPath(): UseShortestPathReturn {
     try {
       const data = await fetchShortestPath(from, to);
       setResult(data);
-    } catch {
+    } catch (err) {
+      console.error('Shortest-path request failed', err);
       setError('Could not find a path between these points.');
     } finally {
       setIsLoading(false);

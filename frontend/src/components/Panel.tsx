@@ -1,4 +1,5 @@
 import type { Coord, PathResult } from '../types';
+import { MAP_COLORS } from '../lib/colors';
 import { Button } from './ui/button';
 
 interface PanelProps {
@@ -51,8 +52,8 @@ export function Panel({ from, to, result, isLoading, error, onFindPath, onClear 
 
       {/* Coordinate display */}
       <div className="flex flex-col gap-3">
-        <CoordRow label="Start" coord={from} color="#16a34a" />
-        <CoordRow label="End"   coord={to}   color="#dc2626" />
+        <CoordRow label="Start" coord={from} color={MAP_COLORS.start} />
+        <CoordRow label="End" coord={to} color={MAP_COLORS.end} />
       </div>
 
       {/* Actions */}
@@ -83,8 +84,8 @@ export function Panel({ from, to, result, isLoading, error, onFindPath, onClear 
       {/* Legend */}
       <div className="border-t border-border pt-3 flex flex-col gap-1.5">
         <p className="text-[11px] font-medium text-ink-secondary uppercase tracking-wide">Routes</p>
-        <LegendItem color="#e63946" label="Fotrute (trail)" />
-        <LegendItem color="#000000" label="Shortest path" thick />
+        <LegendItem color={MAP_COLORS.fotrute} label="Fotrute (trail)" />
+        <LegendItem color={MAP_COLORS.shortestPath} label="Shortest path" thick />
       </div>
     </div>
   );

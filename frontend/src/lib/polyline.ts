@@ -12,35 +12,34 @@ export function decodePolyline(encoded: string): [number, number][] {
   let lng = 0;
 
   while (index < encoded.length) {
-    lat += decodeChunk(encoded, index);
-    index += chunkLength(encoded, index);
+    let dLat: number;
+    let dLng: number;
+    [dLat, index] = decodeValue(encoded, index);
+    [dLng, index] = decodeValue(encoded, index);
 
-    lng += decodeChunk(encoded, index);
-    index += chunkLength(encoded, index);
-
+    lat += dLat;
+    lng += dLng;
     result.push([lat / 1e5, lng / 1e5]);
   }
 
   return result;
 }
 
-function decodeChunk(encoded: string, start: number): number {
+/**
+ * Decodes a single signed value starting at `start` and returns it together
+ * with the index of the next chunk, so each chunk is scanned exactly once.
+ */
+function decodeValue(encoded: string, start: number): [value: number, next: number] {
   let shift = 0;
   let value = 0;
-  let i = start;
-  let b: number;
+  let index = start;
+  let byte: number;
   do {
-    b = encoded.charCodeAt(i++) - 63;
-    value |= (b & 0x1f) << shift;
+    byte = encoded.charCodeAt(index++) - 63;
+    value |= (byte & 0x1f) << shift;
     shift += 5;
-  } while (b >= 0x20);
-  return value & 1 ? ~(value >> 1) : value >> 1;
-}
+  } while (byte >= 0x20);
 
-function chunkLength(encoded: string, start: number): number {
-  let i = start;
-  while (encoded.charCodeAt(i++) - 63 >= 0x20) {
-    /* scan until continuation bit is unset */
-  }
-  return i - start;
+  const delta = value & 1 ? ~(value >> 1) : value >> 1;
+  return [delta, index];
 }
