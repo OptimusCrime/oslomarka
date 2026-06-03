@@ -11,7 +11,7 @@ jobs:
       - name: Clean backend container packages
         uses: actions/delete-package-versions@v5
         with:
-          package-name: optimuscrime/oslomarka/oslomarka-go
+          package-name: oslomarka/oslomarka-go
           package-type: 'container'
           min-versions-to-keep: 3
           token: ${{ secrets.REGISTRY_TOKEN }}
